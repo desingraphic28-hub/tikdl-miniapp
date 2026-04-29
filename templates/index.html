@@ -610,20 +610,28 @@
                         }
                     };
 
-                    if (data) {
-                        options.body = JSON.stringify(data);
+                    // Add initData to request
+                    const requestData = data || {};
+                    if (window.Telegram?.WebApp?.initData) {
+                        requestData.initData = window.Telegram.WebApp.initData;
                     }
 
-                    const response = await fetch(`/api${endpoint}`, options);
+                    if (Object.keys(requestData).length > 0) {
+                        options.body = JSON.stringify(requestData);
+                    }
+
+                    const url = endpoint.startsWith('http') ? endpoint : `/api${endpoint}`;
+                    const response = await fetch(url, options);
                     
                     if (!response.ok) {
-                        throw new Error(`API error: ${response.status}`);
+                        console.warn(`API returned ${response.status} for ${endpoint}`);
+                        return { ok: false, error: `HTTP ${response.status}` };
                     }
 
                     return await response.json();
                 } catch (error) {
                     console.error('API error:', error);
-                    throw error;
+                    return { ok: false, error: error.message };
                 }
             },
 
