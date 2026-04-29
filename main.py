@@ -296,13 +296,13 @@ def internal_error(error):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
-    # Initialize database
-    with app.app_context():
-        db_instance.create_all()
+    import server
+    import logging
     
-    port = int(os.environ.get('PORT', 5000))
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=os.environ.get('FLASK_ENV') == 'development'
+    logging.basicConfig(
+        format="%(asctime)s  %(levelname)-8s  %(message)s",
+        level=logging.INFO
     )
+    
+    app = server.build_server()
+    web.run_app(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
