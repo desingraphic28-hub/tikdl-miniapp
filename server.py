@@ -120,6 +120,19 @@ async def handle_health(request: web.Request) -> web.Response:
 
 # ── Telegram Mini App API Endpoints ────────────────────────────────────────────
 
+async def handle_root(request: web.Request) -> web.Response:
+    """Serve mini app HTML."""
+    try:
+        template_path = Path(__file__).parent / "templates" / "index.html"
+        if template_path.exists():
+            return web.FileResponse(template_path, content_type="text/html")
+        # Fallback if template doesn't exist
+        return web.Response(text="TikDL Telegram Mini App", content_type="text/html")
+    except Exception as e:
+        log.error(f"Error serving root: {e}")
+        return web.Response(text="TikDL Telegram Mini App", content_type="text/html")
+
+
 async def api_auth(request: web.Request) -> web.Response:
     """Authenticate user from Telegram Mini App."""
     try:
@@ -3422,6 +3435,9 @@ async def api_scraper_start(request: web.Request) -> web.Response:
 
 def build_server() -> web.Application:
     app = web.Application()
+    
+    # Root endpoint
+    app.router.add_get("/", handle_root)
     
     # Telegram Mini App endpoints
     app.router.add_post("/api/auth",           api_auth)
