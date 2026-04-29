@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikDL License Manager</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #0088cc;
+            --tg-theme-button-color: #0088cc;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f5f5f5;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0088cc 0%, #0066aa 100%);
+            color: white;
+            padding: 20px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 8px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: var(--tg-theme-hint-color);
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: var(--tg-theme-button-color);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+
+        .card:active {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--tg-theme-text-color);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+        }
+
+        .badge.success {
+            background: #34c759;
+            color: white;
+        }
+
+        .badge.warning {
+            background: #ff9500;
+            color: white;
+        }
+
+        .badge.danger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .badge.info {
+            background: var(--tg-theme-button-color);
+            color: white;
+        }
+
+        .plan-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .plan-card {
+            background: white;
+            border: 2px solid var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .plan-card:active {
+            border-color: var(--tg-theme-button-color);
+            transform: translateY(-2px);
+        }
+
+        .plan-emoji {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .plan-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .plan-days {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color);
+            margin-bottom: 8px;
+        }
+
+        .plan-price {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--tg-theme-button-color);
+            margin-bottom: 8px;
+        }
+
+        .license-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .license-item {
+            background: white;
+            border-left: 4px solid var(--tg-theme-button-color);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .license-item.expired {
+            border-left-color: #ff3b30;
+            opacity: 0.7;
+        }
+
+        .license-key {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+            word-break: break-all;
+            padding: 8px;
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+
+        .license-info {
+            display: grid;
+            gap: 6px;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .license-info-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .label {
+            color: var(--tg-theme-hint-color);
+            font-weight: 500;
+        }
+
+        .value {
+            color: var(--tg-theme-text-color);
+            font-weight: 600;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 12px;
+        }
+
+        .btn-primary {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+        }
+
+        .btn-primary:active {
+            opacity: 0.85;
+        }
+
+        .btn-secondary {
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            border: 1px solid var(--tg-theme-hint-color);
+        }
+
+        .btn-secondary:active {
+            background: #e8e8e8;
+        }
+
+        .btn-danger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .btn-danger:active {
+            opacity: 0.85;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .button-group button {
+            margin-top: 0;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--tg-theme-text-color);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--tg-theme-secondary-bg-color);
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            color: var(--tg-theme-text-color);
+            background: white;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color);
+            box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.1);
+        }
+
+        .payment-qr {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .payment-qr img {
+            max-width: 200px;
+            border-radius: 8px;
+        }
+
+        .payment-info {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-description {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 32px;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 8px;
+            height: 8px;
+            background: var(--tg-theme-button-color);
+            border-radius: 50%;
+            animation: spin 1.4s infinite;
+        }
+
+        .spinner:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .spinner:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes spin {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            padding: 16px;
+            background: #222222;
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            animation: slideUp 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        .toast.success {
+            background: #34c759;
+        }
+
+        .toast.error {
+            background: #ff3b30;
+        }
+
+        .toast.info {
+            background: var(--tg-theme-button-color);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .copy-button {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--tg-theme-secondary-bg-color);
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .copy-button:active {
+            opacity: 0.7;
+        }
+
+        .dark-mode {
+            --tg-theme-bg-color: #1a1a1a;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #666666;
+            --tg-theme-secondary-bg-color: #2a2a2a;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-indicator.active {
+            background: #34c759;
+        }
+
+        .status-indicator.warning {
+            background: #ff9500;
+        }
+
+        .status-indicator.expired {
+            background: #ff3b30;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 TikDL License Manager</h1>
+            <p id="greeting">Welcome back!</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('home')">🏠 Home</button>
+            <button class="tab-btn" onclick="switchTab('licenses')">📋 My Licenses</button>
+            <button class="tab-btn" onclick="switchTab('plans')">💎 Get License</button>
+            <button class="tab-btn" onclick="switchTab('account')">👤 Account</button>
+        </div>
+
+        <!-- Home Tab -->
+        <div id="home" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">✨ Quick Actions</span>
+                </div>
+                <button class="btn-primary" onclick="switchTab('plans')">🎯 Get New License</button>
+                <button class="btn-primary" style="margin-top: 8px;" onclick="switchTab('licenses')">🔍 View My Licenses</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📊 License Status</span>
+                </div>
+                <div id="home-summary" style="font-size: 14px; line-height: 1.8;">
+                    <div class="license-info">
+                        <div class="license-info-row">
+                            <span class="label">Active Licenses:</span>
+                            <span class="value" id="active-count">0</span>
+                        </div>
+                        <div class="license-info-row">
+                            <span class="label">Total Licenses:</span>
+                            <span class="value" id="total-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">ℹ️ How It Works</span>
+                </div>
+                <div style="font-size: 14px; line-height: 1.8; color: var(--tg-theme-hint-color);">
+                    <p>✅ Choose a plan from the Plans tab</p>
+                    <p>💳 Complete payment (free trial available)</p>
+                    <p>🔑 Receive your license key instantly</p>
+                    <p>🚀 Use it in your app or device</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Licenses Tab -->
+        <div id="licenses" class="tab-content">
+            <div id="licenses-container"></div>
+        </div>
+
+        <!-- Plans Tab -->
+        <div id="plans" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">💎 Available Plans</span>
+                </div>
+            </div>
+            <div id="plans-container"></div>
+        </div>
+
+        <!-- Account Tab -->
+        <div id="account" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">👤 Account Information</span>
+                </div>
+                <div id="account-info"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for License Details -->
+    <div id="license-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; padding: 16px; overflow-y: auto;">
+        <div style="background: white; border-radius: 12px; padding: 16px; margin-top: 50px; max-width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 18px; font-weight: 600;">License Details</h3>
+                <button style="background: none; border: none; font-size: 24px; cursor: pointer; width: auto; padding: 0; margin: 0;" onclick="closeLicenseModal()">✕</button>
+            </div>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // ── Telegram Mini App Setup ───────────────────────────────────────────
+        const tg = window.Telegram.WebApp;
+        let currentUser = null;
+
+        tg.ready();
+        tg.expand();
+
+        if (tg.initData) {
+            tg.sendData(JSON.stringify({ status: 'authenticated' }));
+        }
+
+        // ── API Functions ─────────────────────────────────────────────────────
+
+        const API = {
+            async request(endpoint, method = 'GET', data = null) {
+                try {
+                    const options = {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    };
+
+                    if (data) {
+                        options.body = JSON.stringify(data);
+                    }
+
+                    const response = await fetch(`/api${endpoint}`, options);
+                    
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    console.error('API error:', error);
+                    throw error;
+                }
+            },
+
+            auth(initData) {
+                return this.request('/auth', 'POST', { initData });
+            },
+
+            getLicenses(userId) {
+                return this.request(`/licenses?user_id=${userId}`);
+            },
+
+            getPlans(excludeFree = false) {
+                return this.request(`/plans?exclude_free=${excludeFree}`);
+            },
+
+            verifyLicense(machineId, licenseKey) {
+                return this.request('/verify-license', 'POST', {
+                    machine_id: machineId,
+                    license_key: licenseKey
+                });
+            },
+
+            getLicense(userId, planId) {
+                return this.request('/get-license', 'POST', {
+                    user_id: userId,
+                    plan_id: planId
+                });
+            },
+
+            renewLicense(userId, licenseKey, planId) {
+                return this.request('/renew-license', 'POST', {
+                    user_id: userId,
+                    license_key: licenseKey,
+                    plan_id: planId
+                });
+            },
+
+            getUserInfo(userId) {
+                return this.request(`/user-info?user_id=${userId}`);
+            },
+
+            getPaymentInfo() {
+                return this.request('/payment-info');
+            }
+        };
+
+        // ── UI Functions ──────────────────────────────────────────────────────
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideUp 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // Load tab data
+            if (tabName === 'licenses') {
+                loadLicenses();
+            } else if (tabName === 'plans') {
+                loadPlans();
+            } else if (tabName === 'account') {
+                loadAccountInfo();
+            }
+        }
+
+        async function loadLicenses() {
+            const container = document.getElementById('licenses-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><div class="spinner"></div><div class="spinner"></div></div>';
+
+            try {
+                const result = await API.getLicenses(currentUser.id);
+                
+                if (result.licenses.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <div class="empty-title">No Licenses Yet</div>
+                            <div class="empty-description">Get your first license to get started</div>
+                            <button class="btn-primary" onclick="switchTab('plans')">Get License</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '<div class="license-list">';
+                
+                for (const license of result.licenses) {
+                    const isExpired = new Date(license.expired) < new Date();
+                    const statusClass = isExpired ? 'expired' : '';
+                    const statusBadge = isExpired ? '❌ Expired' : '✅ Active';
+                    
+                    html += `
+                        <div class="license-item ${statusClass}">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">
+                                        <span class="status-indicator ${isExpired ? 'expired' : 'active'}"></span>
+                                        License ${license.id.substring(0, 8)}...
+                                    </div>
+                                    <div class="license-key">
+                                        ${license.id}
+                                        <button class="copy-button" onclick="copyToClipboard('${license.id}')">Copy</button>
+                                    </div>
+                                    <div class="license-info">
+                                        <div class="license-info-row">
+                                            <span class="label">Expires:</span>
+                                            <span class="value">${formatDate(license.expired)}</span>
+                                        </div>
+                                        <div class="license-info-row">
+                                            <span class="label">Created:</span>
+                                            <span class="value">${formatDate(license.created)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="badge ${isExpired ? 'danger' : 'success'}">${statusBadge}</span>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn-secondary" onclick="showLicenseDetails('${license.id}')">Details</button>
+                                ${!isExpired ? `<button class="btn-primary" onclick="switchTab('plans')">Renew</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Load licenses error:', error);
+                container.innerHTML = '<div class="card"><p style="color: red;">Error loading licenses</p></div>';
+                showToast('Error loading licenses', 'error');
+            }
+        }
+
+        async function loadPlans() {
+            const container = document.getElementById('plans-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><div class="spinner"></div><div class="spinner"></div></div>';
+
+            try {
+                const result = await API.getPlans();
+                
+                let html = '<div class="plan-grid">';
+                
+                for (const plan of result.plans) {
+                    const priceText = plan.price === 0 ? 'FREE' : `$${plan.price.toFixed(2)}`;
+                    
+                    html += `
+                        <div class="plan-card" onclick="selectPlan('${plan.id}', '${plan.name}', ${plan.price})">
+                            <div class="plan-emoji">${plan.emoji}</div>
+                            <div class="plan-name">${plan.name}</div>
+                            <div class="plan-days">${plan.days} days access</div>
+                            <div class="plan-price">${priceText}</div>
+                            <div style="font-size: 13px; color: var(--tg-theme-hint-color);">${plan.description}</div>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Load plans error:', error);
+                container.innerHTML = '<div class="card"><p style="color: red;">Error loading plans</p></div>';
+                showToast('Error loading plans', 'error');
+            }
+        }
+
+        async function selectPlan(planId, planName, price) {
+            showToast(`Getting ${planName}...`, 'info');
+
+            try {
+                const result = await API.getLicense(currentUser.id, planId);
+                
+                if (result.success) {
+                    showToast('✅ License issued! Check your licenses tab', 'success');
+                    loadLicenses();
+                    setTimeout(() => switchTab('licenses'), 1000);
+                } else if (result.payment_required) {
+                    showPaymentModal(planId, planName, price);
+                }
+
+            } catch (error) {
+                console.error('Select plan error:', error);
+                showToast('Error getting license', 'error');
+            }
+        }
+
+        async function showPaymentModal(planId, planName, price) {
+            try {
+                const paymentInfo = await API.getPaymentInfo();
+                
+                let modal = `
+                    <div class="card">
+                        <h3 style="margin-bottom: 12px;">💳 Payment Required</h3>
+                        <p style="font-size: 14px; margin-bottom: 12px;">
+                            <strong>Plan:</strong> ${planName}<br>
+                            <strong>Amount:</strong> $${price.toFixed(2)}
+                        </p>
+                        
+                        ${paymentInfo.bakong ? `
+                            <div class="payment-qr">
+                                <p style="margin-bottom: 12px; font-weight: 600;">Scan to Pay</p>
+                                <img src="data:image/png;base64,${paymentInfo.bakong.qr}" alt="Bakong QR">
+                                <p style="margin-top: 12px; font-size: 12px; color: var(--tg-theme-hint-color);">
+                                    Bakong ID: ${paymentInfo.bakong.id}
+                                </p>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="payment-info">${paymentInfo.payment_info}</div>
+                        
+                        <p style="font-size: 13px; color: var(--tg-theme-hint-color); margin-bottom: 12px;">
+                            ⏱️ <strong>Payment Processing:</strong> Usually within 24 hours
+                        </p>
+                        
+                        <button class="btn-primary" onclick="contactAdmin()">Contact Admin for Approval</button>
+                        <button class="btn-secondary" onclick="closeLicenseModal()">Cancel</button>
+                    </div>
+                `;
+                
+                document.getElementById('license-modal').style.display = 'block';
+                document.getElementById('modal-content').innerHTML = modal;
+
+            } catch (error) {
+                console.error('Payment info error:', error);
+                showToast('Error loading payment info', 'error');
+            }
+        }
+
+        async function showLicenseDetails(licenseId) {
+            let modal = `
+                <div class="card">
+                    <h3 style="margin-bottom: 12px;">License Key</h3>
+                    <div class="license-key">${licenseId}</div>
+                    <button class="btn-primary" onclick="copyToClipboard('${licenseId}')">📋 Copy to Clipboard</button>
+                    <button class="btn-secondary" onclick="closeLicenseModal()" style="margin-top: 8px;">Close</button>
+                </div>
+            `;
+            
+            document.getElementById('license-modal').style.display = 'block';
+            document.getElementById('modal-content').innerHTML = modal;
+        }
+
+        async function loadAccountInfo() {
+            const container = document.getElementById('account-info');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><div class="spinner"></div><div class="spinner"></div></div>';
+
+            try {
+                const result = await API.getUserInfo(currentUser.id);
+                
+                const html = `
+                    <div class="license-info">
+                        <div class="license-info-row">
+                            <span class="label">Name:</span>
+                            <span class="value">${result.user.first_name} ${result.user.last_name}</span>
+                        </div>
+                        <div class="license-info-row">
+                            <span class="label">Username:</span>
+                            <span class="value">@${result.user.username || 'N/A'}</span>
+                        </div>
+                        <div class="license-info-row">
+                            <span class="label">User ID:</span>
+                            <span class="value" style="font-family: monospace; font-size: 12px;">${result.user.id}</span>
+                        </div>
+                        <div class="license-info-row">
+                            <span class="label">Joined:</span>
+                            <span class="value">${formatDate(result.user.joined_at)}</span>
+                        </div>
+                        <hr style="margin: 12px 0; border: none; border-top: 1px solid var(--tg-theme-secondary-bg-color);">
+                        <div class="license-info-row">
+                            <span class="label">Active Licenses:</span>
+                            <span class="value">${result.active_licenses}</span>
+                        </div>
+                        <div class="license-info-row">
+                            <span class="label">Total Licenses:</span>
+                            <span class="value">${result.license_count}</span>
+                        </div>
+                    </div>
+                    <button class="btn-secondary" onclick="contactAdmin()" style="margin-top: 12px;">📧 Contact Support</button>
+                `;
+
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Load account error:', error);
+                container.innerHTML = '<p style="color: red;">Error loading account info</p>';
+                showToast('Error loading account info', 'error');
+            }
+        }
+
+        // ── Utility Functions ─────────────────────────────────────────────────
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ Copied to clipboard!', 'success');
+            });
+        }
+
+        function formatDate(isoString) {
+            try {
+                const date = new Date(isoString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } catch {
+                return isoString;
+            }
+        }
+
+        function closeLicenseModal() {
+            document.getElementById('license-modal').style.display = 'none';
+        }
+
+        function contactAdmin() {
+            // Open Telegram chat with admin
+            if (tg.initData) {
+                window.open(`tg://user?id=${tg.initData.split('&')[0].split('=')[1]}`, '_blank');
+            }
+        }
+
+        // ── Initialization ────────────────────────────────────────────────────
+
+        async function init() {
+            try {
+                // Authenticate with Telegram
+                const authResult = await API.auth(tg.initData);
+                currentUser = authResult.user;
+
+                document.getElementById('greeting').textContent = 
+                    `Welcome, ${currentUser.first_name}!`;
+
+                // Load initial data
+                loadLicenses();
+                loadAccountInfo();
+
+                // Update home tab summary
+                const userInfo = await API.getUserInfo(currentUser.id);
+                document.getElementById('active-count').textContent = userInfo.active_licenses;
+                document.getElementById('total-count').textContent = userInfo.license_count;
+
+            } catch (error) {
+                console.error('Init error:', error);
+                showToast('Authentication failed', 'error');
+            }
+        }
+
+        // Start app
+        window.addEventListener('load', init);
+
+        // Handle dark mode
+        if (tg.colorScheme === 'dark') {
+            document.documentElement.classList.add('dark-mode');
+        }
+    </script>
+</body>
+</html>

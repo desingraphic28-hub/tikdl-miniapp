@@ -1,0 +1,8 @@
+flask==3.0.0
+flask-cors==4.0.0
+flask-sqlalchemy==3.1.1
+python-telegram-bot==20.7
+aiohttp==3.9.3
+bakong-khqr>=0.5.0
+qrcode[pil]>=7.4
+werkzeug==3.0.0
